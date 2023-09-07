@@ -64,8 +64,6 @@ async function startApp() {
   } catch (error) {
     console.error('An error occurred:', error);
   } finally {
-    // Close the database connection when done
-    await db.end();
   }
 }
 
@@ -86,7 +84,7 @@ function viewAllDepartments() {
 function viewAllRoles() {
   // Query the database to fetch roles and display as a formatted table
   const query =
-    'SELECT roles.role_id, roles.title, roles.salary, departments.department_name FROM roles INNER JOIN departments ON roles.departments_id = departments.departments_id';
+    'SELECT * FROM roles';
   db.query(query, (err, results) => {
     if (err) throw err;
 
@@ -99,7 +97,7 @@ function viewAllRoles() {
 function viewAllEmployees() {
   // Query the database to fetch employee data and display as a formatted table
   const query =
-    'SELECT employees.employee_id, employees.first_name, employees.last_name, roles.title, departments.department_name, roles.salary, CONCAT(managers.first_name, " ", managers.last_name) AS manager FROM employees INNER JOIN roles ON employees.role_id = roles.role_id INNER JOIN departments ON roles.department_id = departments.department_id LEFT JOIN employees AS managers ON employees.manager_id = managers.employee_id';
+    'SELECT * FROM employees';
   db.query(query, (err, results) => {
     if (err) throw err;
 
@@ -119,7 +117,7 @@ function addDepartment() {
       },
     ])
     .then((answers) => {
-      const query = 'INSERT INTO departments (department_name) VALUES (?)';
+      const query = 'INSERT INTO departments (name) VALUES (?)';
       db.query(query, [answers.departmentName], (err) => {
         if (err) throw err;
         console.log('Department added successfully!');
@@ -131,13 +129,13 @@ function addDepartment() {
 // Function to add a role
 function addRole() {
   // Query the database to get department names for the choices in the prompt
-  const departmentQuery = 'SELECT department_id, department_name FROM departments';
+  const departmentQuery = 'SELECT id, name FROM departments';
   db.query(departmentQuery, (err, departments) => {
     if (err) throw err;
 
     const departmentChoices = departments.map((department) => ({
-      value: department.department_id,
-      name: department.department_name,
+      value: department.id,
+      name: department.name,
     }));
 
     inquirer
@@ -160,7 +158,7 @@ function addRole() {
         },
       ])
       .then((answers) => {
-        const query = 'INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)';
+        const query = 'INSERT INTO roles (title, salary, id) VALUES (?, ?, ?)';
         db.query(
           query,
           [answers.title, answers.salary, answers.departmentId],
@@ -177,7 +175,7 @@ function addRole() {
 // Function to add an employee
 function addEmployee() {
   // Query the database to get role titles for the choices in the prompt
-  const roleQuery = 'SELECT role_id, title FROM roles';
+  const roleQuery = 'SELECT id, title FROM roles';
   db.query(roleQuery, (err, roles) => {
     if (err) throw err;
 
@@ -212,7 +210,7 @@ function addEmployee() {
       ])
       .then((answers) => {
         const query =
-          'INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)';
+          'INSERT INTO employees (first_name, last_name, id, managerId) VALUES (?, ?, ?, ?)';
         db.query(
           query,
           [
@@ -234,7 +232,7 @@ function addEmployee() {
 // Function to update an employee's role
 function updateEmployeeRole() {
   // Query the database to get a list of employees for the choices in the prompt
-  const employeeQuery = 'SELECT employee_id, CONCAT(first_name, " ", last_name) AS full_name FROM employees';
+  const employeeQuery = 'SELECT =id, CONCAT(first_name, " ", last_name) AS full_name FROM employees';
   db.query(employeeQuery, (err, employees) => {
     if (err) throw err;
 
@@ -244,7 +242,7 @@ function updateEmployeeRole() {
     }));
 
     // Query the database to get role titles for the choices in the prompt
-    const roleQuery = 'SELECT role_id, title FROM roles';
+    const roleQuery = 'SELECT id, title FROM roles';
     db.query(roleQuery, (err, roles) => {
       if (err) throw err;
 
